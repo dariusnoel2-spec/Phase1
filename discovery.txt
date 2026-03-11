@@ -1,0 +1,5 @@
+log path: var/log/syslog
+mission path: /opt/alpha/mission.txt
+mission secret: Dont be afriad of the dark
+token path: /var/tmp/.blackout/token.txt
+token secret: 9948-ABX-77
