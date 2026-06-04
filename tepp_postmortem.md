@@ -9,18 +9,13 @@
 ## Phase 0: Reconnaissance
 
 ### Triage Network — 172.100.0.0/24
-[3–5 sentences in APA style. What hosts did you find? What ports and
-services were exposed? What misconfigurations did you identify?]
+[A network scan using Nmap (version 7.98) was performed on the 172.100.0.0/24 subnet, which revealed three active hosts. Host 172.100.0.11 was running Redis on port 6379 with no password set, host 172.100.0.12 was running an FTP service on ports 20 and 21, and host 172.100.0.13 was running a Linux container with root access enabled. Each of these hosts had serious security misconfigurations that would allow an attacker to gain unauthorized access in a real organization.]
 
 ### Breach Network — 172.80.0.0/24
-[3–5 sentences in APA style. What hosts did you find? What ports and
-services were exposed? What did you observe that informed your Phase 2
-approach?]
+[A Nmap scan of the 172.80.0.0/24 subnet identified two active hosts at 172.80.0.1 and 172.80.0.10, both running SSH on port 22. The SSH service on the midterm_target host was identified as the entry point for Phase 2, where a password attack would be attempted. In a real organization, leaving SSH open without strong password policies makes it easy for attackers to break in by simply guessing credentials.]
 
 ### Exploitation Network — 172.60.0.0/24
-[3–5 sentences in APA style. What hosts did you find? What ports and
-services were exposed? What vulnerability did you identify before
-executing your exploit?]
+[Scanning the 172.60.0.0/24 subnet with Nmap revealed one active host at 172.60.0.1 running SSH on port 22. Docker inspection identified a second host at 172.60.0.10 running a web application on port 80. This web application was the target for Phase 3, as web apps that do not properly check user input can be exploited to run commands directly on the server.]
 
 ---
 
@@ -28,54 +23,51 @@ executing your exploit?]
 
 ### Server 1 — 172.100.0.11
 **Vulnerability Identified:**
-[What was exposed and how did you confirm it?]
+[Redis was running on port 6379 with no password set, allowing anyone on the network to connect and access all stored data without authentication.]
 
 **Remediation Commands:**
-[Exact commands used to enter the container and apply the fix]
+[sudo docker exec broken_server_1 redis-cli config set requirepass "StrongPassword123"]
 
 **Before State:**
-[What did the service or permission look like before your fix?]
+[redis-cli config get requirepass returned an empty value, confirming no password was set.]
 
 **After State:**
-[What did it look like after?]
+[redis-cli config get requirepass returned "StrongPassword123", confirming authentication was enabled.]
 
 **Analysis:**
-[2–3 sentences in APA style — why is this vulnerability dangerous
-in a real enterprise environment?]
+[A Redis database with no password set allows any attacker on the network to read, write, or delete all data stored in the database. In a real organization, this could lead to theft of sensitive customer data or complete destruction of application data.]
 
 ### Server 2 — 172.100.0.12
 **Vulnerability Identified:**
-[What unauthorized service was running and how did you confirm it?]
+[The FTP server was configured with file_open_mode=0666, meaning any file uploaded to the server was automatically made readable and writable by all users on the system.]
 
 **Remediation Commands:**
-[Exact commands used to enter the container and terminate the process]
+[sudo docker exec broken_server_2 sed -i 's/file_open_mode=0666/file_open_mode=0644/' /etc/vsftpd/vsftpd.conf]
 
 **Before State:**
-[What was running before your remediation?]
+[file_open_mode=0666 allowed world-writable file permissions on all uploaded files.]
 
 **After State:**
-[What was the state after termination?]
+[file_open_mode=0644 restricts uploaded files so only the owner can write to them.]
 
 **Analysis:**
-[2–3 sentences in APA style — why is this vulnerability dangerous
-in a real enterprise environment?]
+[World-writable file permissions on an FTP server allow any user who can log in to overwrite or corrupt files uploaded by others. In a real organization, this could allow an attacker to replace legitimate files with malicious ones.]
 
 ### Server 3 — 172.100.0.13
 **Vulnerability Identified:**
-[What directory had dangerous permissions and what were they exactly?]
+[The root account was configured with /bin/sh as its login shell, meaning the root user could log in directly and gain full control of the system.]
 
 **Remediation Commands:**
-[Exact commands used to enter the container and apply chmod]
+[sudo docker exec broken_server_3 sed -i 's|root:/bin/sh|root:/sbin/nologin|' /etc/passwd]
 
 **Before State:**
-[What were the permissions before your fix? Be specific.]
+[/etc/passwd showed root:x:0:0:root:/root:/bin/sh, allowing direct root login.]
 
 **After State:**
-[What were the permissions after?]
+[/etc/passwd shows root:x:0:0:root:/root:/sbin/nologin, blocking direct root login.]
 
 **Analysis:**
-[2–3 sentences in APA style — why is this vulnerability dangerous
-in a real enterprise environment?]
+[Allowing direct root login removes a critical layer of security. In a real organization, attackers who gain any foothold on the system could immediately escalate to full root access without needing to exploit any additional vulnerability.]
 
 ---
 
